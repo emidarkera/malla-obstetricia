@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Malla Curricular Obstetricia y Puericultura</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #fdf6f0;
+      margin: 0;
+      padding: 2rem;
+      color: #333;
+    }
+    h1, h2 {
+      color: #80461b;
+    }
+    .container {
+      display: flex;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      gap: 2rem;
+    }
+    .year {
+      min-width: 250px;
+      background: #fff7f0;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      padding: 1rem;
+    }
+    .subject {
+      background: #ffe9d6;
+      border-radius: 8px;
+      padding: 0.5rem;
+      margin-bottom: 0.5rem;
+      cursor: pointer;
+      position: relative;
+      transition: background 0.3s;
+    }
+    .subject.approved {
+      background: #cce5cc;
+      text-decoration: line-through;
+    }
+    .subject.locked {
+      background: #eee;
+      color: #aaa;
+      cursor: not-allowed;
+    }
+    .subject.locked::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 100%;
+      left: 0;
+      background: #333;
+      color: #fff;
+      padding: 0.3rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      white-space: nowrap;
+      display: none;
+    }
+    .subject.locked:hover::after {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <h1>Malla Curricular - Obstetricia y Puericultura</h1>
+  <div class="container" id="malla"></div>
+
+  <script>
+    const malla = [
+      {
+        year: "Primer Año",
+        semesters: [
+          {
+            name: "Semestre 1",
+            subjects: [
+              "Bases Biológicas, Bioquímicas y Físicas del cuerpo humano",
+              "Anatomía General",
+              "Psicología General y Clínica",
+              "Introducción a los Cuidados Clínicos de Matronería",
+              "Humanización y Consciencia Corporal",
+              "Inglés I"
+            ]
+          },
+          {
+            name: "Semestre 2",
+            subjects: [
+              {
+                name: "Bases Biológicas, Bioquímicas y Físicas del Cuerpo Humano (continuación)",
+                requires: ["Bases Biológicas, Bioquímicas y Físicas del cuerpo humano"]
+              },
+              "Salud Pública y Gestión I",
+              "Desarrollo Habilidades Profesionales",
+              {
+                name: "Introducción a los Cuidados Clínicos de Matronería",
+                requires: ["Introducción a los Cuidados Clínicos de Matronería"]
+              },
+              {
+                name: "Anatomía Especializada",
+                requires: ["Anatomía General"]
+              },
+              {
+                name: "Inglés II",
+                requires: ["Inglés I"]
+              },
+              "Informática Biomédica"
+            ]
+          }
+        ]
+      }
+      // Agrega más años y semestres aquí siguiendo el mismo formato
+    ];
+
+    const estado = JSON.parse(localStorage.getItem('progresoMalla')) || {};
+
+    function renderMalla() {
+      const container = document.getElementById('malla');
+      container.innerHTML = '';
+      malla.forEach(año => {
+        const yearDiv = document.createElement('div');
+        yearDiv.className = 'year';
+        const title = document.createElement('h2');
+        title.textContent = año.year;
+        yearDiv.appendChild(title);
+
+        año.semesters.forEach(sem => {
+          const semTitle = document.createElement('h3');
+          semTitle.textContent = sem.name;
+          yearDiv.appendChild(semTitle);
+
+          sem.subjects.forEach(subject => {
+            const subjectName = typeof subject === 'string' ? subject : subject.name;
+            const key = subjectName;
+            const isApproved = estado[key];
+            const requisitos = subject.requires || [];
+            const locked = requisitos.some(r => !estado[r]);
+
+            const subjDiv = document.createElement('div');
+            subjDiv.className = 'subject';
+            subjDiv.textContent = subjectName;
+            if (isApproved) subjDiv.classList.add('approved');
+            if (locked) {
+              subjDiv.classList.add('locked');
+              subjDiv.dataset.tooltip = "Requiere: " + requisitos.filter(r => !estado[r]).join(', ');
+            }
+
+            subjDiv.addEventListener('click', () => {
+              if (locked) return;
+              estado[key] = !estado[key];
+              localStorage.setItem('progresoMalla', JSON.stringify(estado));
+              renderMalla();
+            });
+
+            yearDiv.appendChild(subjDiv);
+          });
+        });
+        container.appendChild(yearDiv);
+      });
+    }
+
+    renderMalla();
+  </script>
+</body>
+</html>
